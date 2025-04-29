@@ -1,0 +1,124 @@
+\documentclass{beamer}
+
+\usepackage{amsmath, amsfonts, graphicx}
+\usetheme{Madrid}
+
+\title{Spectral Decomposition Based Trading Strategy}
+\author{Dhairya}
+\date{\today}
+
+\begin{document}
+
+\frame{\titlepage}
+
+% Slide 1
+\begin{frame}{1. Data Setup}
+Let:
+\begin{itemize}
+    \item $N = 500$ (number of stocks)
+    \item $T$ (number of time steps)
+    \item $P_i(t)$: price of stock $i$ at time $t$
+\end{itemize}
+
+Log return:
+\[
+R_i(t) = \log P_i(t) - \log P_i(t-1)
+\]
+
+Log return matrix $\mathbf{R} \in \mathbb{R}^{(T-1) \times N}$:
+\[
+\mathbf{R} = [R_i(t)]_{t=2}^T
+\]
+\end{frame}
+
+% Slide 2
+\begin{frame}{2. Correlation Graph}
+Correlation matrix $\mathbf{C}$:
+\[
+C_{ij} = \text{Corr}(R_i, R_j)
+\]
+
+Graph $G = (V, E)$:
+\begin{itemize}
+    \item Nodes: $V = \{1, \dots, N\}$
+    \item Edge weights: $w_{ij} = C_{ij}$ or $\exp\left(-\frac{1 - C_{ij}}{\sigma^2}\right)$
+\end{itemize}
+
+Adjacency matrix $\mathbf{W}$, Degree matrix $\mathbf{D}$:
+\[
+D_{ii} = \sum_j w_{ij}, \quad \mathbf{L} = \mathbf{D} - \mathbf{W}
+\]
+
+Normalized Laplacian:
+\[
+\mathcal{L} = \mathbf{I} - \mathbf{D}^{-1/2} \mathbf{W} \mathbf{D}^{-1/2}
+\]
+\end{frame}
+
+% Slide 3
+\begin{frame}{3. Spectral Clustering}
+Compute smallest $k$ eigenvectors of $\mathcal{L}$:
+\[
+\mathbf{U} = [\mathbf{u}_1, \dots, \mathbf{u}_k] \in \mathbb{R}^{N \times k}
+\]
+
+Normalize rows:
+\[
+\tilde{u}_i = \frac{\mathbf{U}_i}{\|\mathbf{U}_i\|}
+\]
+
+Apply k-means to rows $\tilde{u}_i$:
+\begin{itemize}
+    \item Assign stock $i$ to cluster $c(i) \in \{1, \dots, k\}$
+\end{itemize}
+\end{frame}
+
+% Slide 4
+\begin{frame}{4. Price Normalization}
+Normalized prices:
+\[
+\tilde{P}_i(t) = \frac{P_i(t) - \mu_i}{\sigma_i}, \quad \mu_i = \frac{1}{T} \sum_t P_i(t)
+\]
+
+Each stock in cluster $c$:
+\begin{itemize}
+    \item $S_c = \{i : c(i) = c\}$
+\end{itemize}
+
+Centroid series:
+\[
+\bar{P}_c(t) = \frac{1}{|S_c|} \sum_{i \in S_c} \tilde{P}_i(t)
+\]
+\end{frame}
+
+% Slide 5
+\begin{frame}{5. Signal Generation}
+Cluster spread:
+\[
+\sigma_c(t) = \sqrt{\frac{1}{|S_c|} \sum_{i \in S_c} (\tilde{P}_i(t) - \bar{P}_c(t))^2}
+\]
+
+Z-score:
+\[
+z_i(t) = \frac{\tilde{P}_i(t) - \bar{P}_c(t)}{\sigma_c(t)}
+\]
+
+Trading Signal:
+\begin{itemize}
+    \item $z_i(t) > 3$: Short stock $i$
+    \item $z_i(t) < -3$: Buy stock $i$
+    \item Else: Hold
+\end{itemize}
+\end{frame}
+
+% Slide 6
+\begin{frame}{Optional Enhancements}
+\begin{itemize}
+    \item Add transaction cost buffer: $|z_i(t)| > 3 + \delta$
+    \item Use rolling window normalization
+    \item Exponential volatility adjustment
+    \item Integrate signal with portfolio optimizer
+\end{itemize}
+\end{frame}
+
+\end{document}

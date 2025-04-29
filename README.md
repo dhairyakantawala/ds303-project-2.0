@@ -1,2 +1,2 @@
-# ds303 project 2.0
- codebase for our project as the final submission for ds303
+# DS303-final-project
+ The code for our team
